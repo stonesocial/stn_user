@@ -53,7 +53,7 @@ class UserService extends ClientEitherResponseHandler {
 
     if (result.$1 != null) return (result.$1, null);
 
-    if (result.$2!.data['message'] != null) return (null, null);
+    if (result.$2!.data['message'] != 'success') return (null, null);
 
     return (null, User.fromJson(result.$2!.data['data']));
   }
