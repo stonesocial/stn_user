@@ -276,7 +276,7 @@ class UserService extends ClientEitherResponseHandler {
 
     final user = data != null ? User.fromJson(data!) : null;
 
-    cache(user!, user.pubKey);
+    if (user != null) cache(user, user.pubKey);
 
     return (null, user);
   }
