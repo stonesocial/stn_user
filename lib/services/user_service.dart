@@ -11,6 +11,7 @@ const usersCacheKey = 'users_cache_key';
 
 const blockchainIsNotSupportedYet = 'Blockchain not supported yet';
 const errorCachingUser = 'Error caching user';
+const errorRemovingUserCache = 'Error removing user cache';
 const noUserFoundOnCache = 'No user found on cache';
 
 // ServerFailure _unsupportedBlockchainFailure(String blockchain) =>
@@ -322,6 +323,17 @@ class UserService extends ClientEitherResponseHandler {
       if (result) return (null, true);
 
       return (const CacheFailure(message: errorCachingUser), false);
+    } catch (e) {
+      return (CacheFailure(message: e.toString()), false);
+    }
+  }
+
+  Future<(Failure?, bool)> removeCache([String? key]) async {
+    try {
+      final result = await cacheStorage.remove(key ?? userCacheKey);
+      if (result) return (null, true);
+
+      return (const CacheFailure(message: errorRemovingUserCache), false);
     } catch (e) {
       return (CacheFailure(message: e.toString()), false);
     }
