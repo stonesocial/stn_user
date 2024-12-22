@@ -99,11 +99,11 @@ void main() {
 
     test('cache() - success', () async {
       // Mocking cacheStorage.setString to return true
-      when(mockCacheStorage.setString(userCacheKey, json.encode(testUser.toJson())))
+      when(mockCacheStorage.setString(currentUserCacheKey, json.encode(testUser.toJson())))
           .thenAnswer((_) async => true);
 
       // Calling cache method
-      final result = await userService.cache(testUser);
+      final result = await userService.cache(testUser, currentUserCacheKey);
 
       expect(result.$1, isNull);  // No failure
       expect(result.$2, isTrue);  // Cache should be successful
@@ -111,11 +111,11 @@ void main() {
 
     test('cache() - failure', () async {
       // Mocking cacheStorage.setString to return false (error scenario)
-      when(mockCacheStorage.setString(userCacheKey, json.encode(testUser.toJson())))
+      when(mockCacheStorage.setString(currentUserCacheKey, json.encode(testUser.toJson())))
           .thenAnswer((_) async => false);
 
       // Calling cache method
-      final result = await userService.cache(testUser);
+      final result = await userService.cache(testUser, currentUserCacheKey);
 
       expect(result.$1, isNotNull);  // Failure should occur
       expect(result.$2, isFalse);  // Cache should fail
@@ -125,11 +125,11 @@ void main() {
       final userJson = jsonEncode({'pubKey': 'pubKey', 'username': 'testUser'});
 
       // Mocking cacheStorage.getString to return cached data
-      when(mockCacheStorage.getString(userCacheKey))
+      when(mockCacheStorage.getString(currentUserCacheKey))
           .thenReturn(userJson);
 
       // Calling getCached method
-      final result = userService.getCached();
+      final result = userService.getCached(currentUserCacheKey);
 
       expect(result.$1, isNull);  // No failure
       expect(result.$2, isNotNull);  // User should be returned from cache
@@ -138,11 +138,11 @@ void main() {
 
     test('getCached() - failure', () async {
       // Mocking cacheStorage.getString to return null (cache miss)
-      when(mockCacheStorage.getString(userCacheKey))
+      when(mockCacheStorage.getString(currentUserCacheKey))
           .thenReturn(null);
 
       // Calling getCached method
-      final result = userService.getCached();
+      final result = userService.getCached(currentUserCacheKey);
 
       expect(result.$1, isNotNull);  // Failure should occur
       expect(result.$2, isNull);  // No user should be returned

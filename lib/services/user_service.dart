@@ -5,19 +5,15 @@ import 'package:dependencies/dependencies.dart';
 
 import '../stn_user.dart';
 
-const userCacheKey = 'user_cached_key';
-const channelsCacheKey = 'channels_cache_key';
-const usersCacheKey = 'users_cache_key';
-
 const blockchainIsNotSupportedYet = 'Blockchain not supported yet';
 const errorCachingUser = 'Error caching user';
 const errorRemovingUserCache = 'Error removing user cache';
 const noUserFoundOnCache = 'No user found on cache';
 
-// ServerFailure _unsupportedBlockchainFailure(String blockchain) =>
-//   ServerFailure(message: '${blockchain.toUpperCase()} $blockchainIsNotSupportedYet');
+const currentUserCacheKey = 'current_user_cache_key';
 
-User? get currentUser => locator.get<UserService>().getCached().$2;
+User? get currentUser =>
+    locator.get<UserService>().getCached(currentUserCacheKey).$2;
 
 @singleton
 class UserService extends ClientEitherResponseHandler {
@@ -305,7 +301,7 @@ class UserService extends ClientEitherResponseHandler {
 
   Future<(Failure?, bool)> delete(String pubKey) async {
     final result = await handleClientEitherResponse(
-      _httpClient.DELETE('users/$pubKey'),
+      _httpClient.DELETE('users/$pubKey', body: {}),
     );
 
     if (result.$1 != null) return (result.$1, false);
@@ -314,12 +310,9 @@ class UserService extends ClientEitherResponseHandler {
   }
 
   /// cache
-  Future<(Failure?, bool)> cache(User user, [String? key]) async {
+  Future<(Failure?, bool)> cache(User user, String key) async {
     try {
-      final result = await cacheStorage.setString(
-        key ?? userCacheKey,
-        jsonEncode(user.toJson()),
-      );
+      final result = await cacheStorage.setString(key, jsonEncode(user.toJson()));
       if (result) return (null, true);
 
       return (const CacheFailure(message: errorCachingUser), false);
@@ -328,9 +321,9 @@ class UserService extends ClientEitherResponseHandler {
     }
   }
 
-  Future<(Failure?, bool)> removeCache([String? key]) async {
+  Future<(Failure?, bool)> removeCache(String key) async {
     try {
-      final result = await cacheStorage.remove(key ?? userCacheKey);
+      final result = await cacheStorage.remove(key);
       if (result) return (null, true);
 
       return (const CacheFailure(message: errorRemovingUserCache), false);
@@ -339,9 +332,9 @@ class UserService extends ClientEitherResponseHandler {
     }
   }
 
-  (Failure?, User?) getCached([String? key]) {
+  (Failure?, User?) getCached(String key) {
     try {
-      final result = cacheStorage.getString(key ?? userCacheKey);
+      final result = cacheStorage.getString(key);
       if (result != null) {
         return (null, User.fromJson(jsonDecode(result)));
       }
@@ -350,31 +343,5 @@ class UserService extends ClientEitherResponseHandler {
     } catch (e) {
       return (CacheFailure(message: e.toString()), null);
     }
-  }
-
-  Future<(Failure?, bool)> cacheUsers(String key, CompleteResponse<User> value) async {
-    final result = await cacheStorage.setString(
-      key,
-      jsonEncode(value.toMap(value.data.map((e) => e.toJson()).toList())),
-    );
-
-    if (!result) {
-      return (const CacheFailure(message: 'Error caching users'), false);
-    }
-
-    return (null, true);
-  }
-
-  (Failure?, CompleteResponse<User>?) getCachedUsers(String key) {
-    final result = cacheStorage.getString(key);
-
-    if (result == null) {
-      return (const CacheFailure(message: 'Error getting cached users'), null);
-    }
-
-    final decodeResult = jsonDecode(result);
-    final data = List<User>.from(decodeResult['data'].map((e) => User.fromJson(e)));
-
-    return (null, CompleteResponse<User>.fromMap(decodeResult, data));
   }
 }
