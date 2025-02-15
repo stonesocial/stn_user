@@ -55,6 +55,24 @@ class UserService extends ClientEitherResponseHandler {
     return (null, User.fromJson(result.$2!.data['data']));
   }
 
+  Future<(Failure?, bool)> updateUserDeviceToken({
+    required String pubKey,
+    required String deviceToken,
+  }) async {
+    final result = await handleClientEitherResponse(
+      _httpClient.PUT(
+        'users/devicefcmtoken/update',
+        body: { 'user': pubKey, 'devicetoken': deviceToken },
+      ),
+    );
+
+    if (result.$1 != null) return (result.$1, false);
+
+    if (result.$2!.data['message'] != 'success') return (null, false);
+
+    return (null, true);
+  }
+
   Future<(Failure?, CompleteResponse<User>?)> getAll(QueryFilters filters) async {
     final result = await handleClientEitherResponse(
       _httpClient.GET('users${filters.lazyGet()}'),
